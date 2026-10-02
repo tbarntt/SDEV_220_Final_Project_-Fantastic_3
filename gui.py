@@ -1,9 +1,17 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from member import Member
+from gymclass import GymClass
+from registration import Registration
 
 # List used to store members
 members = []
+
+# List used to store gym classes
+gym_classes = []
+
+# List used to store registrations
+registrations = []
 
 # Create the main application window
 window = tk.Tk()
@@ -316,6 +324,382 @@ def save_changes():
     )
 
 
+def manage_classes():
+    # Create a new window for managing gym classes
+    class_window = tk.Toplevel(window)
+    class_window.title("Manage Gym Classes")
+    class_window.geometry("650x500")
+
+    tk.Label(
+        class_window,
+        text="Gym Classes",
+        font=("Arial", 16)
+    ).pack(pady=10)
+
+    # Form for entering class information
+    class_form = tk.Frame(class_window)
+    class_form.pack(pady=10)
+
+    tk.Label(class_form, text="Class ID:").grid(
+        row=0, column=0, padx=10, pady=5
+    )
+    class_id_entry = tk.Entry(class_form)
+    class_id_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    tk.Label(class_form, text="Class Name:").grid(
+        row=1, column=0, padx=10, pady=5
+    )
+    class_name_entry = tk.Entry(class_form)
+    class_name_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    tk.Label(class_form, text="Instructor:").grid(
+        row=2, column=0, padx=10, pady=5
+    )
+    instructor_entry = tk.Entry(class_form)
+    instructor_entry.grid(row=2, column=1, padx=10, pady=5)
+
+    tk.Label(class_form, text="Capacity:").grid(
+        row=3, column=0, padx=10, pady=5
+    )
+    capacity_entry = tk.Entry(class_form)
+    capacity_entry.grid(row=3, column=1, padx=10, pady=5)
+
+    def add_class():
+        class_id = class_id_entry.get()
+        class_name = class_name_entry.get()
+        instructor = instructor_entry.get()
+        capacity = capacity_entry.get()
+
+        # Make sure all fields are filled in
+        if not class_id or not class_name or not instructor or not capacity:
+            messagebox.showerror(
+                "Missing Information",
+                "Please fill in all class information."
+            )
+            return
+
+        # Class ID and capacity must be numbers
+        if not class_id.isdigit() or not capacity.isdigit():
+            messagebox.showerror(
+                "Invalid Information",
+                "Class ID and Capacity must be numbers."
+            )
+            return
+
+        # Prevent duplicate class IDs
+        for gym_class in gym_classes:
+            if gym_class.class_id == int(class_id):
+                messagebox.showerror(
+                    "Duplicate Class ID",
+                    "A class with that ID already exists."
+                )
+                return
+
+        # Create a GymClass object
+        new_class = GymClass(
+            int(class_id),
+            class_name,
+            instructor,
+            int(capacity)
+        )
+
+        gym_classes.append(new_class)
+
+        messagebox.showinfo(
+            "Class Added",
+            f"{class_name} was added successfully."
+        )
+
+        # Clear the form
+        class_id_entry.delete(0, tk.END)
+        class_name_entry.delete(0, tk.END)
+        instructor_entry.delete(0, tk.END)
+        capacity_entry.delete(0, tk.END)
+
+        
+    add_class_button = tk.Button(
+        class_window,
+        text="Add Class",
+        command=add_class,
+        width=20
+    )
+    add_class_button.pack(pady=10)
+
+    def view_classes():
+        # Create a new window to display gym classes
+        view_window = tk.Toplevel(class_window)
+        view_window.title("Gym Class List")
+        view_window.geometry("650x350")
+
+        tk.Label(
+            view_window,
+            text="Available Gym Classes",
+            font=("Arial", 16)
+        ).pack(pady=10)
+
+        # Create a table
+        class_table = ttk.Treeview(
+            view_window,
+            columns=("ID", "Name", "Instructor", "Capacity", "Registered"),
+            show="headings"
+        )
+
+        class_table.heading("ID", text="ID")
+        class_table.heading("Name", text="Class Name")
+        class_table.heading("Instructor", text="Instructor")
+        class_table.heading("Capacity", text="Capacity")
+        class_table.heading("Registered", text="Registered")
+
+        class_table.column("ID", width=50)
+        class_table.column("Name", width=130)
+        class_table.column("Instructor", width=130)
+        class_table.column("Capacity", width=80)
+        class_table.column("Registered", width=80)
+
+        # Add each gym class to the table
+        for gym_class in gym_classes:
+            class_table.insert(
+                "",
+                tk.END,
+                values=(
+                    gym_class.class_id,
+                    gym_class.class_name,
+                    gym_class.instructor,
+                    gym_class.capacity,
+                    len(gym_class.registrations)
+                )
+            )
+
+        class_table.pack(
+            padx=10,
+            pady=10,
+            fill="both",
+            expand=True
+        )
+
+    view_class_button = tk.Button(
+        class_window,
+        text="View Classes",
+        command=view_classes,
+        width=20
+    )
+    view_class_button.pack(pady=10)    
+
+def manage_registrations():
+    registration_window = tk.Toplevel(window)
+    registration_window.title("Class Registration")
+    registration_window.geometry("500x400")
+
+    tk.Label(
+        registration_window,
+        text="Register Member for Class",
+        font=("Arial", 16)
+    ).pack(pady=15)
+
+    registration_form = tk.Frame(registration_window)
+    registration_form.pack(pady=10)
+
+    # Registration ID
+    tk.Label(
+        registration_form,
+        text="Registration ID:"
+    ).grid(row=0, column=0, padx=10, pady=10)
+
+    registration_id_entry = tk.Entry(registration_form)
+    registration_id_entry.grid(
+        row=0, column=1, padx=10, pady=10
+    )
+
+    # Member ID
+    tk.Label(
+        registration_form,
+        text="Member ID:"
+    ).grid(row=1, column=0, padx=10, pady=10)
+
+    registration_member_entry = tk.Entry(registration_form)
+    registration_member_entry.grid(
+        row=1, column=1, padx=10, pady=10
+    )
+
+    # Class ID
+    tk.Label(
+        registration_form,
+        text="Class ID:"
+    ).grid(row=2, column=0, padx=10, pady=10)
+
+    registration_class_entry = tk.Entry(registration_form)
+    registration_class_entry.grid(
+        row=2, column=1, padx=10, pady=10
+    )  
+
+    def register_member():
+        registration_id = registration_id_entry.get()
+        member_id = registration_member_entry.get()
+        class_id = registration_class_entry.get()
+
+        # Make sure all IDs were entered
+        if not registration_id or not member_id or not class_id:
+            messagebox.showerror(
+                "Missing Information",
+                "Please enter a Registration ID, Member ID, and Class ID."
+            )
+            return
+
+        # Make sure all IDs are numbers
+        if not registration_id.isdigit() or not member_id.isdigit() or not class_id.isdigit():
+            messagebox.showerror(
+                "Invalid Information",
+                "Registration ID, Member ID, and Class ID must be numbers."
+            )
+            return
+
+        # Prevent duplicate registration IDs
+        for registration in registrations:
+            if registration.registration_id == int(registration_id):
+                messagebox.showerror(
+                    "Duplicate Registration",
+                    "A registration with that ID already exists."
+                )
+                return
+
+        # Find the member
+        selected_member = None
+
+        for member in members:
+            if member.member_id == int(member_id):
+                selected_member = member
+                break
+
+        if selected_member is None:
+            messagebox.showerror(
+                "Member Not Found",
+                "No member was found with that ID."
+            )
+            return
+
+        # Find the gym class
+        selected_class = None
+
+        for gym_class in gym_classes:
+            if gym_class.class_id == int(class_id):
+                selected_class = gym_class
+                break
+
+        if selected_class is None:
+            messagebox.showerror(
+                "Class Not Found",
+                "No gym class was found with that ID."
+            )
+            return
+
+        # Create the Registration object
+        new_registration = Registration(
+            int(registration_id),
+            selected_member,
+            selected_class
+        )
+
+        # Add registration to the class
+        if selected_class.add_registration(new_registration):
+            registrations.append(new_registration)
+
+            messagebox.showinfo(
+                "Registration Successful",
+                f"{selected_member.name} was registered for "
+                f"{selected_class.class_name}."
+            )
+
+            registration_id_entry.delete(0, tk.END)
+            registration_member_entry.delete(0, tk.END)
+            registration_class_entry.delete(0, tk.END)
+
+        else:
+            messagebox.showerror(
+                "Class Full",
+                "This class has reached its maximum capacity."
+            )
+
+    register_button = tk.Button(
+        registration_window,
+        text="Register Member",
+        command=register_member,
+        width=20
+    )
+
+    register_button.pack(pady=15)  
+
+    def view_registrations():
+        view_window = tk.Toplevel(registration_window)
+        view_window.title("Registration List")
+        view_window.geometry("550x350")
+
+        tk.Label(
+            view_window,
+            text="Class Registrations",
+            font=("Arial", 16)
+        ).pack(pady=10)
+
+        registration_table = ttk.Treeview(
+            view_window,
+            columns=("Registration ID", "Member", "Class"),
+            show="headings"
+        )
+
+        registration_table.heading(
+            "Registration ID",
+            text="Registration ID"
+        )
+        registration_table.heading(
+            "Member",
+            text="Member"
+        )
+        registration_table.heading(
+            "Class",
+            text="Class"
+        )
+
+        registration_table.column(
+            "Registration ID",
+            width=120
+        )
+        registration_table.column(
+            "Member",
+            width=180
+        )
+        registration_table.column(
+            "Class",
+            width=180
+        )
+
+        # Display each registration
+        for registration in registrations:
+            registration_table.insert(
+                "",
+                tk.END,
+                values=(
+                    registration.registration_id,
+                    registration.member.name,
+                    registration.gym_class.class_name
+                )
+            )
+
+        registration_table.pack(
+            padx=10,
+            pady=10,
+            fill="both",
+            expand=True
+        )
+
+    view_registration_button = tk.Button(
+        registration_window,
+        text="View Registrations",
+        command=view_registrations,
+        width=20
+    )
+
+    view_registration_button.pack(pady=5)
+
+
 # Frame to hold the buttons
 button_frame = tk.Frame(window)
 button_frame.pack(pady=15)
@@ -359,6 +743,36 @@ save_button = tk.Button(
     width=20
 )
 save_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+
+class_button = tk.Button(
+    button_frame,
+    text="Manage Classes",
+    command=manage_classes,
+    width=20
+)
+
+class_button.grid(
+    row=3,
+    column=0,
+    columnspan=2,
+    padx=5,
+    pady=5
+)
+
+registration_button = tk.Button(
+    button_frame,
+    text="Class Registration",
+    command=manage_registrations,
+    width=20
+)
+
+registration_button.grid(
+    row=4,
+    column=0,
+    columnspan=2,
+    padx=5,
+    pady=5
+)
 
 
 # Start the application
