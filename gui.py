@@ -4,6 +4,20 @@ from member import Member
 from gymclass import GymClass
 from registration import Registration
 
+
+# Dictionary containing membership types and descriptions
+membership_types = {
+    "Basic": "Gym access only",
+    "Plus": "Gym access and group classes",
+    "Premium": "Gym access, group classes, and personal training"
+}
+
+# Tuple containing valid membership statuses
+membership_statuses = (
+    "Active",
+    "Inactive",
+    "Expired"
+)
 # List used to store members
 members = []
 
@@ -67,7 +81,7 @@ tk.Label(form_frame, text="Membership Type:").grid(
 
 membership_type_combo = ttk.Combobox(
     form_frame,
-    values=["Basic", "Plus", "Premium"],
+    values=list(membership_types.keys()),
     state="readonly"
 )
 membership_type_combo.grid(row=3, column=1, padx=10, pady=10)
@@ -81,7 +95,7 @@ tk.Label(form_frame, text="Membership Status:").grid(
 
 membership_status_combo = ttk.Combobox(
     form_frame,
-    values=["Active", "Inactive", "Expired"],
+    values=membership_statuses,
     state="readonly"
 )
 membership_status_combo.grid(row=4, column=1, padx=10, pady=10)
@@ -591,6 +605,21 @@ def manage_registrations():
                 "No gym class was found with that ID."
             )
             return
+
+                
+        # Prevent the same member from registering twice
+        # for the same gym class
+        for registration in registrations:
+            if (
+                registration.member.member_id == selected_member.member_id
+                and registration.gym_class.class_id == selected_class.class_id
+            ):
+                messagebox.showerror(
+                    "Duplicate Registration",
+                    f"{selected_member.name} is already registered "
+                    f"for {selected_class.class_name}."
+                )
+                return
 
         # Create the Registration object
         new_registration = Registration(
